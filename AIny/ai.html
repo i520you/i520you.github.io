@@ -159,3 +159,44 @@
                         saveMessage('bot', decodedMessage);
                     } else {
                         loadingMessageElement.textContent = '出现错误，请稍后再试。';
+                        saveMessage('bot', '出现错误，请稍后再试。');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    loadingMessageElement.textContent = '出现错误，请稍后再试。';
+                    saveMessage('bot', '出现错误，请稍后再试。');
+                });
+        }
+
+        function appendMessage(sender, message) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('chat-message', sender);
+            messageElement.textContent = message;
+            chatBody.appendChild(messageElement);
+            chatBody.scrollTop = chatBody.scrollHeight;
+            return messageElement;
+        }
+
+        function decodeUnicode(str) {
+            return str.replace(/\\u[\dA-F]{4}/gi,
+                function (match) {
+                    return String.fromCharCode(parseInt(match.replace(/\\u/g, ''), 16));
+                });
+        }
+
+        function saveMessage(sender, message) {
+            let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+            chatHistory.push({ sender, message });
+            localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+        }
+
+        function loadChatHistory() {
+            let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+            chatHistory.forEach(entry => {
+                appendMessage(entry.sender, entry.message);
+            });
+        }
+    </script>
+</body>
+</html>
