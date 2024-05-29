@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>涩涩女友</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #eceff1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 450px;
+            height: 100%;
+            background-color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-header {
+            background-color: #1976d2;
+            color: white;
+            padding: 2px;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .chat-body {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #f7f9fc;
+            position: relative;
+        }
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 10px 15px;
+            border-radius: 20px;
+            max-width: 75%;
+            word-wrap: break-word;
+        }
+        .chat-message.user {
+            background-color: #c8e6c9;
+            align-self: flex-end;
+        }
+        .chat-message.bot {
+            background-color: #e0e0e0;
+            align-self: flex-start;
+        }
+        .chat-footer {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid #ddd;
+            background-color: #f7f9fc;
+            position: sticky;
+            bottom: 0;
+            z-index: 1000;
+        }
+        .chat-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            font-size: 1em;
+        }
+        .chat-send {
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin-left: 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1em;
+            outline: none;
+        }
+        .chat-send:disabled {
+            background-color: #bbb;
+            cursor: not-allowed;
+        }
+        .loading {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #1976d2;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            涩涩女友
+        </div>
+        <div class="chat-body" id="chat-body">
+            <!-- 聊天消息会出现在这里 -->
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="chat-input" class="chat-input" placeholder="输入你的消息...">
+            <button id="chat-send" class="chat-send">发送</button>
+        </div>
+    </div>
+
+    <script>
+        const chatBody = document.getElementById('chat-body');
+        const chatInput = document.getElementById('chat-input');
+        const chatSend = document.getElementById('chat-send');
+
+        // Load chat history from local storage
+        document.addEventListener('DOMContentLoaded', loadChatHistory);
+
+        chatSend.addEventListener('click', () => {
+            sendMessage();
+        });
+
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            appendMessage('user', message);
+            saveMessage('user', message);
+            chatInput.value = '';
+            chatInput.focus();
+
+            const loadingMessageElement = appendMessage('bot', '...');
+            const loadingSpinner = document.createElement('span');
+            loadingSpinner.className = 'loading';
+            loadingMessageElement.appendChild(loadingSpinner);
+
+            fetch(`https://dx.dingtiankeji.top/gpt.php?msg=${encodeURIComponent(message)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 200) {
+                        const decodedMessage = decodeUnicode(data.data.output);
+                        loadingMessageElement.textContent = decodedMessage;
+                        saveMessage('bot', decodedMessage);
+                    } else {
+                        loadingMessageElement.textContent = '出现错误，请稍后再试。';
